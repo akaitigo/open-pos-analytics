@@ -13,6 +13,6 @@ describe("App", () => {
 
 	it("初期表示は heatmap モジュール", () => {
 		const html = renderToString(<App />);
-		expect(html).toContain("Issue #9");
+		expect(html).toContain("時間帯×曜日");
 	});
 });
