@@ -20,13 +20,14 @@ dependencies {
     implementation("io.quarkus:quarkus-rest")
     implementation("io.quarkus:quarkus-rest-jackson")
     implementation("io.quarkus:quarkus-smallrye-health")
+    implementation("io.quarkus:quarkus-jdbc-postgresql")
+    implementation("io.quarkus:quarkus-hibernate-orm-panache-kotlin")
+    implementation("io.quarkus:quarkus-flyway")
+    implementation("org.flywaydb:flyway-database-postgresql")
     implementation("org.jetbrains.kotlin:kotlin-stdlib")
 
     // 必要に応じて追加:
     // implementation("io.quarkus:quarkus-grpc")
-    // implementation("io.quarkus:quarkus-jdbc-postgresql")
-    // implementation("io.quarkus:quarkus-hibernate-orm-panache-kotlin")
-    // implementation("io.quarkus:quarkus-flyway")
 
     testImplementation("io.quarkus:quarkus-junit5")
     testImplementation("io.rest-assured:rest-assured")
@@ -58,4 +59,11 @@ detekt {
     config.setFrom("$projectDir/detekt.yml")
     parallel = true
     buildUponDefaultConfig = true
+}
+
+tasks.register<JavaExec>("generateSampleData") {
+    group = "application"
+    description = "分析用サンプルCSVを生成する。args: [出力パス] [トランザクション数] [シード]"
+    mainClass.set("com.akaitigo.posanalytics.sample.SampleDataGeneratorKt")
+    classpath = sourceSets["main"].runtimeClasspath
 }
