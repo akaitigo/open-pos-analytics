@@ -19,6 +19,7 @@ dependencies {
     implementation("io.quarkus:quarkus-arc")
     implementation("io.quarkus:quarkus-rest")
     implementation("io.quarkus:quarkus-rest-jackson")
+    implementation("io.quarkus:quarkus-smallrye-health")
     implementation("org.jetbrains.kotlin:kotlin-stdlib")
 
     // 必要に応じて追加:
