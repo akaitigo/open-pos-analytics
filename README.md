@@ -1,0 +1,46 @@
+# open-pos-analytics
+
+[![CI](https://github.com/akaitigo/open-pos-analytics/actions/workflows/ci.yml/badge.svg)](https://github.com/akaitigo/open-pos-analytics/actions/workflows/ci.yml)
+
+[open-pos](https://github.com/akaitigo/open-pos) の売上データを「店主が5分で読める」分析に変える3モジュール拡張。
+
+| モジュール | 何がわかるか |
+|-----------|-------------|
+| **heatmap** | 時間帯×曜日の売上ヒートマップ。カテゴリ別ピーク時間帯（惣菜は夕方、パンは朝） |
+| **basket** | 併売分析。「おにぎり購入者の65%がお茶も買う」— リフト値ランキングと陳列改善のヒント |
+| **cohort** | 顧客コホート/RFM分析。優良・休眠・離脱リスクのセグメント可視化 |
+
+## 技術スタック
+
+- Backend: Kotlin / Quarkus（分析API・open-pos データ取込）
+- Frontend: TypeScript / React (Vite) + D3.js
+- DB: PostgreSQL（事前集計テーブル方式）
+
+## セットアップ
+
+```bash
+# Backend（要 JDK 21）
+cd backend && ./gradlew quarkusDev
+# → http://localhost:8080
+
+# Frontend（要 Node.js 22+）
+cd frontend && npm install && npm run dev
+# → http://localhost:5173
+```
+
+## 開発
+
+```bash
+make check     # lint → test → build（backend + frontend）
+make quality   # 品質ゲート
+```
+
+設計判断は [docs/adr/](docs/adr/)、要求仕様は [PRD.md](PRD.md) を参照。
+
+## ステータス
+
+MVP開発中（Issue #1〜#5）。由来: プロジェクトアイデア #2998 + #3008 + #3018 の統合。
+
+## License
+
+MIT

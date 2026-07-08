@@ -1,0 +1,62 @@
+{
+  "$comment": "Layer-1 kotlin + Layer-2 pos-plugin を統合（モノレポ用にパス調整済み）",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash -c 'INPUT=$(cat); FILE=$(echo \"$INPUT\" | jq -r \".file_path // empty\"); if [ -z \"$FILE\" ]; then exit 0; fi; BASENAME=$(basename \"$FILE\"); case \"$BASENAME\" in detekt.yml|build.gradle.kts|settings.gradle.kts) echo \"BLOCK: lint設定・ビルド設定の変更はADR承認が必須です\" >&2; exit 1;; .env|.env.local|.env.production|.env.staging|.env.development|credentials.json|secrets.yml|secrets.yaml|*.pem|*.key|*.p12|*.pfx) echo \"BLOCK: 機密ファイルの編集はブロックされました。.env.exampleを更新してください\" >&2; exit 1;; esac'"
+          },
+          {
+            "$comment": "PCI-DSS: カード情報のログ出力をブロック（pos-plugin Layer-2）",
+            "type": "command",
+            "command": "bash -c 'INPUT=$(cat); CONTENT=$(echo \"$INPUT\" | jq -r \".new_string // .content // empty\"); if [ -n \"$CONTENT\" ] && echo \"$CONTENT\" | grep -qiE \"(card.?number|pan|cvv|cvc|expir.?date).*log|log.*(card.?number|pan|cvv|cvc|expir.?date)\"; then echo \"BLOCK: カード情報をログに出力するコードは PCI-DSS 違反です\" >&2; exit 1; fi'"
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash -c 'INPUT=$(cat); CMD=$(echo \"$INPUT\" | jq -r \".command // empty\"); if echo \"$CMD\" | grep -qE \"(rm -rf|DROP TABLE|DELETE FROM|git push --force|git reset --hard)\"; then echo \"BLOCK: 破壊的コマンドはブロックされました\" >&2; exit 2; fi; if echo \"$CMD\" | grep -qE \"--no-verify\"; then echo \"BLOCK: --no-verify はブロックされました。フックをスキップしないでください\" >&2; exit 2; fi'"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/scripts/post-lint.sh"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "$comment": "完了ゲート: make check + quality が通るまで完了不可",
+            "type": "command",
+            "command": "bash -c 'make check && make quality'"
+          },
+          {
+            "$comment": "open-pos 互換性チェック（pos-plugin Layer-2）",
+            "type": "command",
+            "command": "bash -c 'if [ -f manifest.json ]; then echo \"manifest.json: OK\"; else echo \"ERROR: manifest.json が必要です（プラグインマニフェスト）\" >&2; exit 1; fi'"
+          },
+          {
+            "$comment": "セキュリティ要件チェック（pos-plugin Layer-2、モノレポパス）",
+            "type": "command",
+            "command": "bash -c 'ISSUES=0; if grep -rn \"localStorage\" frontend/src/ 2>/dev/null | grep -iqE \"token|card|pan|secret\"; then echo \"ERROR: localStorageに機密情報を保存しないでください\" >&2; ISSUES=$((ISSUES+1)); fi; if grep -rn \"eval(\" frontend/src/ backend/src/ 2>/dev/null; then echo \"ERROR: eval()の使用は禁止です\" >&2; ISSUES=$((ISSUES+1)); fi; if [ $ISSUES -gt 0 ]; then exit 1; fi; echo \"セキュリティチェック: PASS\"'"
+          }
+        ]
+      }
+    ]
+  }
+}

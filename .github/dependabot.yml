@@ -1,0 +1,17 @@
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+  - package-ecosystem: "gradle"
+    directory: "/backend"
+    schedule:
+      interval: "weekly"
+    # 注意: Dependabot は build.gradle.kts のプラグインバージョンは更新するが、
+    # gradle.properties の quarkusPlatformVersion (BOM) は更新しない。
+    # Quarkus メジャー更新時は gradle.properties も手動で合わせること。
+  - package-ecosystem: "npm"
+    directory: "/frontend"
+    schedule:
+      interval: "weekly"

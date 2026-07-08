@@ -1,0 +1,11 @@
+{
+  "name": "open-pos-analytics",
+  "version": "0.1.0",
+  "type": "analytics-extension",
+  "description": "open-pos 売上データの heatmap / basket / cohort 分析拡張",
+  "openPos": {
+    "minVersion": "2.0.0",
+    "permissions": ["sales:read", "products:read", "members:read"],
+    "dataAccess": "read-only"
+  }
+}

@@ -1,0 +1,16 @@
+# Gradle
+backend/build/
+backend/.gradle/
+# Node
+node_modules/
+frontend/dist/
+frontend/coverage/
+# 環境変数・秘匿
+.env
+.env.*
+!.env.example
+# IDE / OS
+.idea/
+.vscode/
+*.iml
+.DS_Store
