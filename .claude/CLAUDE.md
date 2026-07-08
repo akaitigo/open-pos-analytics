@@ -12,7 +12,7 @@ open-pos (PostgreSQL) --読取専用--> ingest --正規化--> analytics DB
 
 - ADR-0001（予定）: Backend は Spring Boot 案（アイデア原文）ではなく Quarkus を採用 — open-pos 本体・pos-voice-concierge との整合、既存テンプレート資産
 - ADR-0002（予定）: open-pos データ接続方式（リードレプリカ / エクスポートAPI / CSV取込）— Issue #2 で決定
-- ADR-0003（予定）: 会員IDのハッシュ化方式（PII非保持の担保）
+- ADR-0003（承認済み）: 会員IDは SHA-256 + 環境変数ソルトでハッシュ化し生値を保持しない
 
 ## モジュール構成
 
