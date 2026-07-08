@@ -10,7 +10,7 @@ lint:
 	./gradlew clean detekt
 
 format:
-	./gradlew formatKotlin
+	@echo 'formatter未導入（detekt は静的解析のみ）。kotlinter 導入は Issue #7 で対応'
 
 check: clean format lint test build
 	@echo "All checks passed."

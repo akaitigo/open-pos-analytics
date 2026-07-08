@@ -51,7 +51,7 @@ open-pos-analytics は open-pos の売上データを読み取り専用で取り
 - **Frontend**: TypeScript / React (Vite) + D3.js（ヒートマップ・コホートチャート・併売ネットワーク図）
   - ※ 原文は Next.js 案。ダッシュボードSPAでありSSR不要のため、テンプレート標準の Vite 構成を採用。ADRに含める
 - **DB**: PostgreSQL（取込トランザクション・集計マテリアライズドビュー）
-- **連携**: open-pos の PostgreSQL リードレプリカ想定の読み取り接続、または売上エクスポートAPI/CSV取込（Issue #2 で接続方式を決定しADR化）
+- **連携**: open-pos の PostgreSQL リードレプリカ想定の読み取り接続、または売上エクスポートAPI/CSV取込（Issue #8 で接続方式を決定しADR化）
 - **Infra**: GCP Cloud Run（コンテナ、Ship段階で Dockerfile 追加）
 
 ### アーキテクチャ
@@ -75,7 +75,7 @@ open-pos (PostgreSQL) --读取--> [ingest] --正規化--> analytics DB (PostgreS
 
 ## 競合分析
 
-※ phase2 データ無しのため新規調査が必要（Issue #2 に含める）。既知の競合状況:
+※ phase2 データ無しのため新規調査が必要（Issue #8 に含める）。既知の競合状況:
 
 | 競合 | 概要 | ギャップ |
 |------|-----|---------|
@@ -97,10 +97,10 @@ open-pos (PostgreSQL) --读取--> [ingest] --正規化--> analytics DB (PostgreS
 ## マイルストーン
 
 ### Phase 0: MVP（2週間目安）
-1. 基盤: CI/CD・リンター・テスト・スキーマ設計・サンプルデータ生成器（Issue #1, #2）
-2. heatmap モジュール: 集計API + ヒートマップUI（Issue #3）
-3. basket モジュール: ペア共起集計API + ランキング/ネットワークUI（Issue #4）
-4. cohort モジュール: 月次コホート + RFMセグメントAPI + UI（Issue #5）
+1. 基盤: CI/CD・リンター・テスト・スキーマ設計・サンプルデータ生成器（Issue #7, #8）
+2. heatmap モジュール: 集計API + ヒートマップUI（Issue #9）
+3. basket モジュール: ペア共起集計API + ランキング/ネットワークUI（Issue #10）
+4. cohort モジュール: 月次コホート + RFMセグメントAPI + UI（Issue #11）
 
 ### Phase 1（Ship後の拡張候補）
 - 祝日・イベント特異日検出、POPテンプレート生成（#3008残り）、セグメント別アクション提案（#3018残り）、多店舗対応
@@ -111,6 +111,6 @@ OSS（MIT）。ポートフォリオ用途が主目的。将来的には open-po
 
 ## 未解決事項
 
-- [ ] open-pos データ接続方式: リードレプリカ直結 / エクスポートAPI / CSV の優先順位（Issue #2 でADR化）
-- [ ] 会員IDのハッシュ方式とソルト管理（Issue #5 の設計に含める）
+- [ ] open-pos データ接続方式: リードレプリカ直結 / エクスポートAPI / CSV の優先順位（Issue #8 でADR化）
+- [ ] 会員IDのハッシュ方式とソルト管理（Issue #11 の設計に含める）
 - [ ] 競合の最新状況の一次調査（phase2 データ欠落のため）

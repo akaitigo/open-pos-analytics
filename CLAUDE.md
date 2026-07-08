@@ -33,4 +33,4 @@ test/      プラグインハーネス
 
 ## 現在の状態
 
-PRD.md 参照。Issue #1（CI/CD）から着手。ブランチ保護は Issue #1 完了後に設定。
+PRD.md 参照。Issue #7（CI/CD）から着手。ブランチ保護は Issue #7 完了後に設定。
