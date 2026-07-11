@@ -21,6 +21,7 @@ class MigrationTest {
         val expected = setOf(
             "transactions", "line_items", "customers",
             "sales_by_hour_dow", "item_pair_stats", "customer_monthly_cohort",
+            "rfm_segments",
         )
         assertTrue(tables.containsAll(expected), "不足: ${expected - tables}")
     }
