@@ -9,6 +9,7 @@ object TestDb {
     private val TABLES = listOf(
         "line_items",
         "transactions",
+        "rfm_segments",
         "customers",
         "sales_by_hour_dow",
         "item_pair_stats",
