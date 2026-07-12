@@ -4,7 +4,7 @@ import com.akaitigo.posanalytics.domain.LineItemEntity
 import com.akaitigo.posanalytics.domain.TransactionEntity
 import jakarta.enterprise.context.ApplicationScoped
 import jakarta.persistence.EntityManager
-import jakarta.transaction.Transactional
+import io.quarkus.narayana.jta.QuarkusTransaction
 import java.nio.file.Files
 import java.nio.file.Path
 import java.time.ZoneOffset
@@ -26,7 +26,11 @@ class IngestService(
     fun ingestFile(path: Path): IngestReport =
         Files.newBufferedReader(path).useLines { ingest(it) }
 
-    @Transactional
+    /**
+     * 取込はチャンク単位の独立トランザクションでコミットする。
+     * 全件を単一トランザクションで処理すると、10万件規模で JTA のトランザクション
+     * タイムアウト（既定60秒）に到達しリーパーにロールバックされるため（ship時の実走で検出）。
+     */
     fun ingest(lines: Sequence<String>): IngestReport {
         val parsed = parser.parse(lines)
         val errors = parsed.errors.toMutableList()
@@ -35,16 +39,12 @@ class IngestService(
         var duplicates = 0
 
         val grouped = parsed.rows.groupBy { it.transactionId }
-        grouped.forEach { (transactionId, rows) ->
-            when {
-                !isConsistent(rows) -> errors.add(
-                    RowError(rows.first().lineNumber, "明細間で occurred_at / member_id が不一致です: $transactionId"),
-                )
-                TransactionEntity.existsBySourceId(transactionId) -> duplicates++
-                else -> {
-                    importedLineItems += persistTransaction(transactionId, rows)
-                    importedTransactions++
-                }
+        grouped.entries.chunked(TX_CHUNK_SIZE).forEach { chunk ->
+            QuarkusTransaction.requiringNew().run {
+                val result = ingestChunk(chunk, errors)
+                importedTransactions += result.transactions
+                importedLineItems += result.lineItems
+                duplicates += result.duplicates
             }
         }
         return IngestReport(
@@ -55,6 +55,30 @@ class IngestService(
             errors = errors,
         )
     }
+
+    private fun ingestChunk(
+        chunk: List<Map.Entry<String, List<ParsedRow>>>,
+        errors: MutableList<RowError>,
+    ): ChunkResult {
+        var transactions = 0
+        var lineItems = 0
+        var duplicates = 0
+        chunk.forEach { (transactionId, rows) ->
+            when {
+                !isConsistent(rows) -> errors.add(
+                    RowError(rows.first().lineNumber, "明細間で occurred_at / member_id が不一致です: $transactionId"),
+                )
+                TransactionEntity.existsBySourceId(transactionId) -> duplicates++
+                else -> {
+                    lineItems += persistTransaction(transactionId, rows)
+                    transactions++
+                }
+            }
+        }
+        return ChunkResult(transactions, lineItems, duplicates)
+    }
+
+    private data class ChunkResult(val transactions: Int, val lineItems: Int, val duplicates: Int)
 
     private fun isConsistent(rows: List<ParsedRow>): Boolean {
         val first = rows.first()
@@ -98,6 +122,8 @@ class IngestService(
     }
 
     companion object {
+        /** 1トランザクションでコミットする取引数（JTAタイムアウト回避とリトライ粒度のバランス） */
+        private const val TX_CHUNK_SIZE = 500
         private val UPSERT_CUSTOMER_SQL = """
             INSERT INTO customers (customer_hash, first_seen_at, last_seen_at, visit_count, total_spent)
             VALUES (:hash, :occurredAt, :occurredAt, 1, :amount)
