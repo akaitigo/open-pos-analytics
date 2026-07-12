@@ -1,6 +1,6 @@
 import type { ChangeEvent } from "react";
 import type { BasketSegment, BasketSortKey } from "../../lib/basket";
-import { SEGMENTS, SEGMENT_LABELS, SORTS, SORT_LABELS, isBasketSortKey } from "../../lib/basket";
+import { isBasketSortKey, SEGMENT_LABELS, SEGMENTS, SORT_LABELS, SORTS } from "../../lib/basket";
 
 interface Props {
 	segment: BasketSegment;
