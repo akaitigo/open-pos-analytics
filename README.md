@@ -18,15 +18,25 @@
 
 ## セットアップ
 
+前提: JDK 21 / Node.js 22+ / Docker（PostgreSQL は Quarkus Dev Services が自動起動）
+
 ```bash
-# Backend（要 JDK 21）
+# 1. Backend 起動
 cd backend && ./gradlew quarkusDev
 # → http://localhost:8080
 
-# Frontend（要 Node.js 22+）
+# 2. サンプルデータ生成 → 取込 + 集計（別ターミナル）
+cd backend && ./gradlew generateSampleData --args="/tmp/sample.csv 100000 42"
+curl -X POST localhost:8080/api/admin/ingest \
+  -H 'Content-Type: application/json' \
+  -d '{"path":"/tmp/sample.csv"}'
+
+# 3. Frontend 起動
 cd frontend && npm install && npm run dev
-# → http://localhost:5173
+# → http://localhost:5173 で3モジュールのダッシュボードが見られる
 ```
+
+実データは open-pos からエクスポートした同形式の CSV を `/api/admin/ingest` に渡す（ADR-0002）。管理エンドポイントはローカル運用前提の無認証（[ADR-0004](docs/adr/0004-unauthenticated-admin-endpoints.md)）。
 
 ## 開発
 
