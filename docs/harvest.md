@@ -10,7 +10,7 @@
 | PR merged | 18 |
 | テスト数 | backend 77 / frontend 51（計128） |
 | CI失敗数 | 10/100（直近100run中。うち大半はDependabot major更新の相互依存衝突・biome設定非互換によるnpm ci/lint失敗。#18対応で解消済み） |
-| ADR数 | 5 |
+| ADR数 | 4 |
 | コミット数 (non-merge) | 21 |
 | CLAUDE.md行数 | ルート36行 + .claude/33行（各50行以下） |
 
@@ -24,7 +24,7 @@
 - [ ] .claudeignore（未導入）
 - [x] lefthook.yml
 - [x] startup.sh（実体あり）
-- [x] ADR 5件
+- [x] ADR 4件
 - [x] dependabot.yml
 
 ### Layer-1 (ツール強制)
@@ -48,6 +48,7 @@
 | 3 | 中 | idea-work SKILL.md | 依存bump系PRを部分適用した際は`package.json`変更を`git add`する時に対応する`package-lock.json`も同一コミットに含める確認ステップを追加 | 本セッションでpackage.jsonのみgit addしてpackage-lock.jsonのroot engines反映漏れが発生（#29で別途修正） |
 | 4 | 低 | PRDテンプレート | 「未解決事項」チェックボックスをADR作成時に自動的にチェック済みへ倒す運用ルールを明記（もしくはADRへのリンクを併記） | PRD.mdの未解決事項2件がADRで実質決着済みなのに文書上は未チェックのまま放置されていた |
 | 5 | 低 | layer-0 CLAUDE.md 生成テンプレート | .claudeignore の生成を必須化する | 本リポジトリは.gitignoreのみで.claudeignore未導入 |
+| 6 | 中 | idea-harvest SKILL.md | ADR数の収集コマンドを `ls docs/adr/*.md \| wc -l` から `ls docs/adr/[0-9]*.md \| wc -l` に変更（adr-template.mdを除外） | 本harvest作成時に `adr-template.md` を誤ってADR件数に含めてしまい、Codexレビューで実測4件との不一致を指摘された |
 
 ## 振り返り
 
