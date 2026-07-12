@@ -15,8 +15,9 @@ import jakarta.transaction.Transactional
  * R/F/M のスコアリング（3分位）とセグメント分類ルールの定義・根拠は docs/rfm-segmentation.md を参照。
  */
 @ApplicationScoped
-class CohortAggregationService(private val entityManager: EntityManager) {
-
+class CohortAggregationService(
+    private val entityManager: EntityManager,
+) {
     /**
      * rfm_segments を全置換で再計算する。
      * 会員（customers）が0件の場合は何も挿入しない（会員データなしは API 側で 200 フォールバック）。
@@ -37,7 +38,8 @@ class CohortAggregationService(private val entityManager: EntityManager) {
         // - 離脱リスク(at_risk): V>=4 かつ r_score=1
         // - 休眠(dormant):    V<=3
         // 根拠: docs/rfm-segmentation.md
-        private val INSERT_RFM_SQL = """
+        private val INSERT_RFM_SQL =
+            """
             WITH ref AS (
                 SELECT MAX(last_seen_at) AS as_of FROM customers
             ),
@@ -69,6 +71,6 @@ class CohortAggregationService(private val entityManager: EntityManager) {
                    END,
                    last_seen_at, now()
             FROM scored
-        """.trimIndent()
+            """.trimIndent()
     }
 }

@@ -1,7 +1,9 @@
 package com.akaitigo.posanalytics.basket
 
 /** 併売ペアランキングの時間帯セグメント。value は API クエリパラメータ表現。 */
-enum class BasketSegment(val value: String) {
+enum class BasketSegment(
+    val value: String,
+) {
     MORNING("morning"),
     NOON("noon"),
     EVENING("evening"),
@@ -17,7 +19,10 @@ enum class BasketSegment(val value: String) {
  * ランキングのソート軸。orderByClause は SQL の ORDER BY 句に埋め込む定数。
  * enum 内で完結する固定文字列でありユーザー入力を含まない（SQL インジェクション不可）。
  */
-enum class BasketSortKey(val value: String, val orderByClause: String) {
+enum class BasketSortKey(
+    val value: String,
+    val orderByClause: String,
+) {
     LIFT("lift", "s.lift DESC"),
     CONFIDENCE("confidence", "GREATEST(s.confidence_a_to_b, s.confidence_b_to_a) DESC"),
     SUPPORT("support", "s.support DESC"),

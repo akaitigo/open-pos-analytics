@@ -12,8 +12,9 @@ import java.time.format.DateTimeParseException
  * 期待ヘッダ: transaction_id,occurred_at,member_id,product_code,product_name,category,quantity,unit_price
  * MVP はクォート無しCSV前提（ADR-0002）。不正行は中断せず RowError として集約する。
  */
-class CsvTransactionParser(private val clock: Clock = Clock.systemUTC()) {
-
+class CsvTransactionParser(
+    private val clock: Clock = Clock.systemUTC(),
+) {
     fun parse(lines: Sequence<String>): ParseResult {
         val rows = mutableListOf<ParsedRow>()
         val errors = mutableListOf<RowError>()
@@ -35,7 +36,11 @@ class CsvTransactionParser(private val clock: Clock = Clock.systemUTC()) {
         return ParseResult(rows = rows, errors = errors, totalDataRows = dataRows)
     }
 
-    private fun parseLine(lineNumber: Int, raw: String, maxOccurredAt: Instant): ParsedRow {
+    private fun parseLine(
+        lineNumber: Int,
+        raw: String,
+        maxOccurredAt: Instant,
+    ): ParsedRow {
         val cols = raw.split(',')
         require(cols.size == COLUMN_COUNT) { "列数が不正です（期待 $COLUMN_COUNT, 実際 ${cols.size}）" }
 
@@ -52,14 +57,16 @@ class CsvTransactionParser(private val clock: Clock = Clock.systemUTC()) {
         require(productName.isNotEmpty()) { "product_name が空です" }
         require(category.isNotEmpty()) { "category が空です" }
 
-        val quantity = requireNotNull(cols[IDX_QUANTITY].trim().toIntOrNull()) {
-            "quantity が整数ではありません: ${cols[IDX_QUANTITY]}"
-        }
+        val quantity =
+            requireNotNull(cols[IDX_QUANTITY].trim().toIntOrNull()) {
+                "quantity が整数ではありません: ${cols[IDX_QUANTITY]}"
+            }
         require(quantity > 0) { "quantity は正の整数が必要です: $quantity" }
 
-        val unitPrice = requireNotNull(cols[IDX_UNIT_PRICE].trim().toBigDecimalOrNull()) {
-            "unit_price が数値ではありません: ${cols[IDX_UNIT_PRICE]}"
-        }
+        val unitPrice =
+            requireNotNull(cols[IDX_UNIT_PRICE].trim().toBigDecimalOrNull()) {
+                "unit_price が数値ではありません: ${cols[IDX_UNIT_PRICE]}"
+            }
         require(unitPrice >= BigDecimal.ZERO) { "unit_price は非負が必要です: $unitPrice" }
 
         return ParsedRow(
@@ -75,12 +82,16 @@ class CsvTransactionParser(private val clock: Clock = Clock.systemUTC()) {
         )
     }
 
-    private fun parseOccurredAt(value: String, maxOccurredAt: Instant): Instant {
-        val instant = try {
-            OffsetDateTime.parse(value).toInstant()
-        } catch (e: DateTimeParseException) {
-            throw IllegalArgumentException("occurred_at をISO-8601として解釈できません: $value", e)
-        }
+    private fun parseOccurredAt(
+        value: String,
+        maxOccurredAt: Instant,
+    ): Instant {
+        val instant =
+            try {
+                OffsetDateTime.parse(value).toInstant()
+            } catch (e: DateTimeParseException) {
+                throw IllegalArgumentException("occurred_at をISO-8601として解釈できません: $value", e)
+            }
         require(!instant.isBefore(MIN_OCCURRED_AT)) { "occurred_at が古すぎます（2000年以降のみ受理）: $value" }
         require(!instant.isAfter(maxOccurredAt)) { "occurred_at が未来日時です: $value" }
         return instant

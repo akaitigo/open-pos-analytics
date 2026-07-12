@@ -7,17 +7,16 @@ import io.restassured.RestAssured.given
 import io.restassured.http.ContentType
 import jakarta.inject.Inject
 import jakarta.persistence.EntityManager
-import java.nio.file.Files
-import java.nio.file.Path
 import org.hamcrest.CoreMatchers.containsString
 import org.hamcrest.Matchers.greaterThan
 import org.hamcrest.Matchers.not
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import java.nio.file.Files
+import java.nio.file.Path
 
 @QuarkusTest
 class AdminResourceTest {
-
     @Inject
     lateinit var entityManager: EntityManager
 
@@ -37,7 +36,8 @@ class AdminResourceTest {
         given()
             .contentType(ContentType.JSON)
             .body(mapOf("path" to csv.toAbsolutePath().toString()))
-            .`when`().post("/api/admin/ingest")
+            .`when`()
+            .post("/api/admin/ingest")
             .then()
             .statusCode(200)
             .body("ingestedTransactions", greaterThan(0))
@@ -48,12 +48,23 @@ class AdminResourceTest {
             .body("aggregates.customerMonthlyCohort", greaterThan(0))
             .body("aggregates.rfmSegments", greaterThan(0))
 
-        given().`when`().get("/api/heatmap")
-            .then().statusCode(200).body("cells.size()", greaterThan(0))
-        given().`when`().get("/api/basket/pairs")
-            .then().statusCode(200).body("pairs.size()", greaterThan(0))
-        given().`when`().get("/api/rfm")
-            .then().statusCode(200)
+        given()
+            .`when`()
+            .get("/api/heatmap")
+            .then()
+            .statusCode(200)
+            .body("cells.size()", greaterThan(0))
+        given()
+            .`when`()
+            .get("/api/basket/pairs")
+            .then()
+            .statusCode(200)
+            .body("pairs.size()", greaterThan(0))
+        given()
+            .`when`()
+            .get("/api/rfm")
+            .then()
+            .statusCode(200)
     }
 
     @Test
@@ -62,17 +73,30 @@ class AdminResourceTest {
         SampleDataGenerator().generate(csv, transactionCount = 300, seed = 7L)
         val body = mapOf("path" to csv.toAbsolutePath().toString())
 
-        given().contentType(ContentType.JSON).body(body)
-            .`when`().post("/api/admin/ingest").then().statusCode(200)
-        given().contentType(ContentType.JSON).body(body)
-            .`when`().post("/api/admin/ingest")
-            .then().statusCode(200)
+        given()
+            .contentType(ContentType.JSON)
+            .body(body)
+            .`when`()
+            .post("/api/admin/ingest")
+            .then()
+            .statusCode(200)
+        given()
+            .contentType(ContentType.JSON)
+            .body(body)
+            .`when`()
+            .post("/api/admin/ingest")
+            .then()
+            .statusCode(200)
             .body("ingestedTransactions", org.hamcrest.Matchers.equalTo(0))
             .body("skippedDuplicates", greaterThan(0))
 
-        given().contentType(ContentType.JSON).body(emptyMap<String, Any>())
-            .`when`().post("/api/admin/recompute")
-            .then().statusCode(200)
+        given()
+            .contentType(ContentType.JSON)
+            .body(emptyMap<String, Any>())
+            .`when`()
+            .post("/api/admin/recompute")
+            .then()
+            .statusCode(200)
             .body("salesByHourDow", greaterThan(0))
     }
 
@@ -86,27 +110,43 @@ class AdminResourceTest {
 
     @Test
     fun `minPairCountが1未満なら400を返す`() {
-        given().contentType(ContentType.JSON).body(mapOf("minPairCount" to 0))
-            .`when`().post("/api/admin/recompute")
-            .then().statusCode(400)
+        given()
+            .contentType(ContentType.JSON)
+            .body(mapOf("minPairCount" to 0))
+            .`when`()
+            .post("/api/admin/recompute")
+            .then()
+            .statusCode(400)
             .body("error", containsString("minPairCount"))
     }
 
     @Test
     fun `エラー応答に生の会員IDやスタックトレースを含めない`() {
-        val response = given().contentType(ContentType.JSON)
-            .body(mapOf("path" to "/no/such/file.csv"))
-            .`when`().post("/api/admin/ingest")
-            .then().statusCode(400)
-            .body("error", not(containsString("Exception")))
-            .extract().asString()
+        val response =
+            given()
+                .contentType(ContentType.JSON)
+                .body(mapOf("path" to "/no/such/file.csv"))
+                .`when`()
+                .post("/api/admin/ingest")
+                .then()
+                .statusCode(400)
+                .body("error", not(containsString("Exception")))
+                .extract()
+                .asString()
         assert(!response.contains("at com.akaitigo")) { "スタックトレースが露出している" }
     }
 
-    private fun postIngestExpecting400(body: Map<String, Any>, messagePart: String) {
-        given().contentType(ContentType.JSON).body(body)
-            .`when`().post("/api/admin/ingest")
-            .then().statusCode(400)
+    private fun postIngestExpecting400(
+        body: Map<String, Any>,
+        messagePart: String,
+    ) {
+        given()
+            .contentType(ContentType.JSON)
+            .body(body)
+            .`when`()
+            .post("/api/admin/ingest")
+            .then()
+            .statusCode(400)
             .body("error", containsString(messagePart))
     }
 }

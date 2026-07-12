@@ -12,7 +12,6 @@ import java.time.Instant
 @Entity
 @Table(name = "customers")
 class CustomerEntity : PanacheEntityBase {
-
     companion object : PanacheCompanionBase<CustomerEntity, String>
 
     @Id

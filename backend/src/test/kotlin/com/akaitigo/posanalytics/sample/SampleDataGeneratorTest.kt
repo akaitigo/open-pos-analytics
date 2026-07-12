@@ -1,17 +1,18 @@
 package com.akaitigo.posanalytics.sample
 
 import com.akaitigo.posanalytics.ingest.CsvTransactionParser
-import java.nio.file.Files
-import java.nio.file.Path
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
+import java.nio.file.Files
+import java.nio.file.Path
 
 class SampleDataGeneratorTest {
-
     @Test
-    fun `決定的に妥当なCSVを生成する`(@TempDir tmp: Path) {
+    fun `決定的に妥当なCSVを生成する`(
+        @TempDir tmp: Path,
+    ) {
         val out = tmp.resolve("sample.csv")
         val summary = SampleDataGenerator().generate(out, transactionCount = 400, seed = 42L)
 
@@ -25,13 +26,19 @@ class SampleDataGeneratorTest {
     }
 
     @Test
-    fun `リピート会員と併売傾向を含む`(@TempDir tmp: Path) {
+    fun `リピート会員と併売傾向を含む`(
+        @TempDir tmp: Path,
+    ) {
         val out = tmp.resolve("sample.csv")
         SampleDataGenerator().generate(out, transactionCount = 600, seed = 7L)
         val rows = CsvTransactionParser().parse(Files.readAllLines(out).asSequence()).rows
 
         val txToMember = rows.groupBy({ it.transactionId }, { it.memberId }).mapValues { it.value.first() }
-        val memberCounts = txToMember.values.filterNotNull().groupingBy { it }.eachCount()
+        val memberCounts =
+            txToMember.values
+                .filterNotNull()
+                .groupingBy { it }
+                .eachCount()
         assertTrue(memberCounts.values.any { it >= 3 }, "3回以上来店するリピート会員が存在する")
 
         val txProducts = rows.groupBy({ it.transactionId }, { it.productCode }).mapValues { it.value.toSet() }

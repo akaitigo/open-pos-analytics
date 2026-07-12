@@ -1,0 +1,5 @@
+# ktlint (kotlinter) の設定。detekt の MaxLineLength と行長を一致させる
+root = true
+
+[*.{kt,kts}]
+max_line_length = 120

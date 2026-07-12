@@ -16,7 +16,6 @@ import java.math.BigDecimal
 @Entity
 @Table(name = "line_items")
 class LineItemEntity : PanacheEntityBase {
-
     companion object : PanacheCompanionBase<LineItemEntity, Long>
 
     @Id

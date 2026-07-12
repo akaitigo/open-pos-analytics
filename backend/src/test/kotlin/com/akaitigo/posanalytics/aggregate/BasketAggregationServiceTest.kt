@@ -5,15 +5,14 @@ import com.akaitigo.posanalytics.ingest.IngestService
 import io.quarkus.test.junit.QuarkusTest
 import jakarta.inject.Inject
 import jakarta.persistence.EntityManager
-import java.math.BigDecimal
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import java.math.BigDecimal
 
 @QuarkusTest
 class BasketAggregationServiceTest {
-
     @Inject
     lateinit var basketAggregationService: BasketAggregationService
 
@@ -127,47 +126,87 @@ class BasketAggregationServiceTest {
         ingestService.ingest(lines.asSequence())
     }
 
-    private fun pair(txId: String, at: String, a: String, b: String): List<String> =
-        listOf(line(txId, at, a), line(txId, at, b))
+    private fun pair(
+        txId: String,
+        at: String,
+        a: String,
+        b: String,
+    ): List<String> = listOf(line(txId, at, a), line(txId, at, b))
 
-    private fun single(txId: String, at: String, code: String): List<String> =
-        listOf(line(txId, at, code))
+    private fun single(
+        txId: String,
+        at: String,
+        code: String,
+    ): List<String> = listOf(line(txId, at, code))
 
-    private fun line(txId: String, at: String, code: String): String {
+    private fun line(
+        txId: String,
+        at: String,
+        code: String,
+    ): String {
         val (name, category) = PRODUCTS.getValue(code)
         return "$txId,$at,,$code,$name,$category,1,100"
     }
 
-    private fun pairCount(a: String, b: String, seg: String): Long =
-        (pairCountRow(a, b, seg).single() as Number).toLong()
+    private fun pairCount(
+        a: String,
+        b: String,
+        seg: String,
+    ): Long = (pairCountRow(a, b, seg).single() as Number).toLong()
 
-    private fun pairCountOrNull(a: String, b: String, seg: String): Long? =
-        pairCountRow(a, b, seg).firstOrNull()?.let { (it as Number).toLong() }
+    private fun pairCountOrNull(
+        a: String,
+        b: String,
+        seg: String,
+    ): Long? = pairCountRow(a, b, seg).firstOrNull()?.let { (it as Number).toLong() }
 
-    private fun pairCountRow(a: String, b: String, seg: String): List<*> =
-        entityManager.createNativeQuery(
-            """
-            SELECT pair_count FROM item_pair_stats
-            WHERE product_a = :a AND product_b = :b AND time_segment = :seg
-            """.trimIndent(),
-        ).setParameter("a", a).setParameter("b", b).setParameter("seg", seg).resultList
+    private fun pairCountRow(
+        a: String,
+        b: String,
+        seg: String,
+    ): List<*> =
+        entityManager
+            .createNativeQuery(
+                """
+                SELECT pair_count FROM item_pair_stats
+                WHERE product_a = :a AND product_b = :b AND time_segment = :seg
+                """.trimIndent(),
+            ).setParameter("a", a)
+            .setParameter("b", b)
+            .setParameter("seg", seg)
+            .resultList
 
-    private fun segmentOf(a: String, b: String): String =
-        entityManager.createNativeQuery(
-            """
-            SELECT time_segment FROM item_pair_stats
-            WHERE product_a = :a AND product_b = :b AND time_segment <> 'all'
-            """.trimIndent(),
-        ).setParameter("a", a).setParameter("b", b).singleResult as String
+    private fun segmentOf(
+        a: String,
+        b: String,
+    ): String =
+        entityManager
+            .createNativeQuery(
+                """
+                SELECT time_segment FROM item_pair_stats
+                WHERE product_a = :a AND product_b = :b AND time_segment <> 'all'
+                """.trimIndent(),
+            ).setParameter("a", a)
+            .setParameter("b", b)
+            .singleResult as String
 
-    private fun statsOf(a: String, b: String, seg: String): PairStats {
-        val row = entityManager.createNativeQuery(
-            """
-            SELECT pair_count, support, confidence_a_to_b, confidence_b_to_a, lift
-            FROM item_pair_stats
-            WHERE product_a = :a AND product_b = :b AND time_segment = :seg
-            """.trimIndent(),
-        ).setParameter("a", a).setParameter("b", b).setParameter("seg", seg).singleResult as Array<*>
+    private fun statsOf(
+        a: String,
+        b: String,
+        seg: String,
+    ): PairStats {
+        val row =
+            entityManager
+                .createNativeQuery(
+                    """
+                    SELECT pair_count, support, confidence_a_to_b, confidence_b_to_a, lift
+                    FROM item_pair_stats
+                    WHERE product_a = :a AND product_b = :b AND time_segment = :seg
+                    """.trimIndent(),
+                ).setParameter("a", a)
+                .setParameter("b", b)
+                .setParameter("seg", seg)
+                .singleResult as Array<*>
         return PairStats(
             pairCount = (row[0] as Number).toLong(),
             support = (row[1] as BigDecimal).toDouble(),
@@ -182,21 +221,22 @@ class BasketAggregationServiceTest {
         private const val HEADER =
             "transaction_id,occurred_at,member_id,product_code,product_name,category,quantity,unit_price"
 
-        private val PRODUCTS = mapOf(
-            "P-101" to ("鮭おにぎり" to "米飯"),
-            "P-301" to ("緑茶500ml" to "飲料"),
-            "P-201" to ("まぐろ刺身" to "鮮魚"),
-            "P-302" to ("本わさびチューブ" to "調味料"),
-            "P-102" to ("幕の内弁当" to "米飯"),
-            "P-303" to ("ドリップコーヒー" to "飲料"),
-            "P-401" to ("クロワッサン" to "ベーカリー"),
-            "P-403" to ("メロンパン" to "ベーカリー"),
-            "P-501" to ("缶ビール350ml" to "酒類"),
-            "P-601" to ("ミックスナッツ" to "菓子"),
-            "P-701" to ("牛乳1L" to "日配"),
-            "P-703" to ("豆腐" to "日配"),
-            "P-801" to ("ポテトサラダ" to "惣菜"),
-            "P-803" to ("コロッケ" to "惣菜"),
-        )
+        private val PRODUCTS =
+            mapOf(
+                "P-101" to ("鮭おにぎり" to "米飯"),
+                "P-301" to ("緑茶500ml" to "飲料"),
+                "P-201" to ("まぐろ刺身" to "鮮魚"),
+                "P-302" to ("本わさびチューブ" to "調味料"),
+                "P-102" to ("幕の内弁当" to "米飯"),
+                "P-303" to ("ドリップコーヒー" to "飲料"),
+                "P-401" to ("クロワッサン" to "ベーカリー"),
+                "P-403" to ("メロンパン" to "ベーカリー"),
+                "P-501" to ("缶ビール350ml" to "酒類"),
+                "P-601" to ("ミックスナッツ" to "菓子"),
+                "P-701" to ("牛乳1L" to "日配"),
+                "P-703" to ("豆腐" to "日配"),
+                "P-801" to ("ポテトサラダ" to "惣菜"),
+                "P-803" to ("コロッケ" to "惣菜"),
+            )
     }
 }

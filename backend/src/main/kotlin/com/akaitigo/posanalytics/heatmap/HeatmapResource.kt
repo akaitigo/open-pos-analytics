@@ -17,8 +17,9 @@ import org.eclipse.microprofile.openapi.annotations.responses.APIResponses
  */
 @Path("/api")
 @Produces(MediaType.APPLICATION_JSON)
-class HeatmapResource(private val heatmapService: HeatmapService) {
-
+class HeatmapResource(
+    private val heatmapService: HeatmapService,
+) {
     @GET
     @Path("/heatmap")
     @Operation(summary = "時間帯×曜日ヒートマップ", description = "事前集計テーブルから 24時間×7曜日 のセルを返す")
@@ -54,20 +55,23 @@ class HeatmapResource(private val heatmapService: HeatmapService) {
         return Metric.fromParam(metric) ?: badRequest("metric は sales または count を指定してください")
     }
 
-    private fun validateLength(name: String, value: String?) {
+    private fun validateLength(
+        name: String,
+        value: String?,
+    ) {
         if (value != null && value.length > MAX_PARAM_LENGTH) {
             badRequest("$name は $MAX_PARAM_LENGTH 文字以内で指定してください")
         }
     }
 
-    private fun badRequest(message: String): Nothing {
+    private fun badRequest(message: String): Nothing =
         throw WebApplicationException(
-            Response.status(Response.Status.BAD_REQUEST)
+            Response
+                .status(Response.Status.BAD_REQUEST)
                 .entity(ApiError(message))
                 .type(MediaType.APPLICATION_JSON)
                 .build(),
         )
-    }
 
     companion object {
         private const val MAX_PARAM_LENGTH = 100

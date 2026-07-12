@@ -18,12 +18,14 @@ import jakarta.transaction.Transactional
  * 組合せ爆発対策として、セグメント別でも最小共起回数（minPairCount）でプルーニングする。
  */
 @ApplicationScoped
-class BasketAggregationService(private val entityManager: EntityManager) {
-
+class BasketAggregationService(
+    private val entityManager: EntityManager,
+) {
     @Transactional
     fun recomputeSegmentedPairs(minPairCount: Long = DEFAULT_MIN_PAIR_COUNT) {
         entityManager.createNativeQuery(DELETE_SEGMENTED_SQL).executeUpdate()
-        entityManager.createNativeQuery(INSERT_SEGMENTED_SQL)
+        entityManager
+            .createNativeQuery(INSERT_SEGMENTED_SQL)
             .setParameter("minPairCount", minPairCount)
             .executeUpdate()
     }
@@ -37,7 +39,8 @@ class BasketAggregationService(private val entityManager: EntityManager) {
         private val DELETE_SEGMENTED_SQL =
             "DELETE FROM item_pair_stats WHERE time_segment <> '$SEGMENT_ALL'"
 
-        private val INSERT_SEGMENTED_SQL = """
+        private val INSERT_SEGMENTED_SQL =
+            """
             WITH tx_hour AS (
                 SELECT id, EXTRACT(HOUR FROM occurred_at AT TIME ZONE '$TZ')::int AS h
                 FROM transactions
@@ -83,6 +86,6 @@ class BasketAggregationService(private val entityManager: EntityManager) {
             JOIN product_tx_counts ca ON ca.seg = p.seg AND ca.product_code = p.product_a
             JOIN product_tx_counts cb ON cb.seg = p.seg AND cb.product_code = p.product_b
             WHERE p.pair_count >= :minPairCount AND st.n > 0
-        """.trimIndent()
+            """.trimIndent()
     }
 }

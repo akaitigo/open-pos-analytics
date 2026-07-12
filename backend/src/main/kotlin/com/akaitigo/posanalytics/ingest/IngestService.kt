@@ -2,9 +2,9 @@ package com.akaitigo.posanalytics.ingest
 
 import com.akaitigo.posanalytics.domain.LineItemEntity
 import com.akaitigo.posanalytics.domain.TransactionEntity
+import io.quarkus.narayana.jta.QuarkusTransaction
 import jakarta.enterprise.context.ApplicationScoped
 import jakarta.persistence.EntityManager
-import io.quarkus.narayana.jta.QuarkusTransaction
 import java.nio.file.Files
 import java.nio.file.Path
 import java.time.ZoneOffset
@@ -20,11 +20,9 @@ class IngestService(
     private val hasher: CustomerIdHasher,
     private val entityManager: EntityManager,
 ) {
-
     private val parser = CsvTransactionParser()
 
-    fun ingestFile(path: Path): IngestReport =
-        Files.newBufferedReader(path).useLines { ingest(it) }
+    fun ingestFile(path: Path): IngestReport = Files.newBufferedReader(path).useLines { ingest(it) }
 
     /**
      * 取込はチャンク単位の独立トランザクションでコミットする。
@@ -65,10 +63,16 @@ class IngestService(
         var duplicates = 0
         chunk.forEach { (transactionId, rows) ->
             when {
-                !isConsistent(rows) -> errors.add(
-                    RowError(rows.first().lineNumber, "明細間で occurred_at / member_id が不一致です: $transactionId"),
-                )
-                TransactionEntity.existsBySourceId(transactionId) -> duplicates++
+                !isConsistent(rows) -> {
+                    errors.add(
+                        RowError(rows.first().lineNumber, "明細間で occurred_at / member_id が不一致です: $transactionId"),
+                    )
+                }
+
+                TransactionEntity.existsBySourceId(transactionId) -> {
+                    duplicates++
+                }
+
                 else -> {
                     lineItems += persistTransaction(transactionId, rows)
                     transactions++
@@ -78,14 +82,21 @@ class IngestService(
         return ChunkResult(transactions, lineItems, duplicates)
     }
 
-    private data class ChunkResult(val transactions: Int, val lineItems: Int, val duplicates: Int)
+    private data class ChunkResult(
+        val transactions: Int,
+        val lineItems: Int,
+        val duplicates: Int,
+    )
 
     private fun isConsistent(rows: List<ParsedRow>): Boolean {
         val first = rows.first()
         return rows.all { it.occurredAt == first.occurredAt && it.memberId == first.memberId }
     }
 
-    private fun persistTransaction(transactionId: String, rows: List<ParsedRow>): Int {
+    private fun persistTransaction(
+        transactionId: String,
+        rows: List<ParsedRow>,
+    ): Int {
         val first = rows.first()
         val customerHash = first.memberId?.let(hasher::hash)
 
@@ -112,9 +123,13 @@ class IngestService(
         return rows.size
     }
 
-    private fun upsertCustomer(customerHash: String, transaction: TransactionEntity) {
+    private fun upsertCustomer(
+        customerHash: String,
+        transaction: TransactionEntity,
+    ) {
         val occurredAt = transaction.occurredAt.atOffset(ZoneOffset.UTC)
-        entityManager.createNativeQuery(UPSERT_CUSTOMER_SQL)
+        entityManager
+            .createNativeQuery(UPSERT_CUSTOMER_SQL)
             .setParameter("hash", customerHash)
             .setParameter("occurredAt", occurredAt)
             .setParameter("amount", transaction.totalAmount)
@@ -124,7 +139,8 @@ class IngestService(
     companion object {
         /** 1トランザクションでコミットする取引数（JTAタイムアウト回避とリトライ粒度のバランス） */
         private const val TX_CHUNK_SIZE = 500
-        private val UPSERT_CUSTOMER_SQL = """
+        private val UPSERT_CUSTOMER_SQL =
+            """
             INSERT INTO customers (customer_hash, first_seen_at, last_seen_at, visit_count, total_spent)
             VALUES (:hash, :occurredAt, :occurredAt, 1, :amount)
             ON CONFLICT (customer_hash) DO UPDATE SET
@@ -132,6 +148,6 @@ class IngestService(
                 last_seen_at = GREATEST(customers.last_seen_at, EXCLUDED.last_seen_at),
                 visit_count = customers.visit_count + 1,
                 total_spent = customers.total_spent + EXCLUDED.total_spent
-        """.trimIndent()
+            """.trimIndent()
     }
 }

@@ -24,7 +24,6 @@ class AdminResource(
     private val cohortAggregationService: CohortAggregationService,
     private val entityManager: EntityManager,
 ) {
-
     @POST
     @Path("/ingest")
     fun ingest(request: IngestRequest?): IngestResponse {
@@ -63,24 +62,40 @@ class AdminResource(
 
     private fun validatedCsvPath(rawPath: String?): java.nio.file.Path {
         val trimmed = rawPath?.trim().orEmpty()
-        val syntaxError = when {
-            trimmed.isEmpty() -> "path は必須です"
-            trimmed.length > MAX_PATH_LENGTH -> "path が長すぎます（最大 $MAX_PATH_LENGTH 文字）"
-            else -> null
-        }
+        val syntaxError =
+            when {
+                trimmed.isEmpty() -> "path は必須です"
+                trimmed.length > MAX_PATH_LENGTH -> "path が長すぎます（最大 $MAX_PATH_LENGTH 文字）"
+                else -> null
+            }
         if (syntaxError != null) {
             throw AdminBadRequestException(syntaxError)
         }
-        val csvPath = java.nio.file.Path.of(trimmed)
-        val fileError = when {
-            !csvPath.isAbsolute -> "path は絶対パスで指定してください"
-            !csvPath.fileName.toString().endsWith(".csv") -> "拡張子 .csv のファイルのみ取込可能です"
-            !Files.isRegularFile(csvPath) || !Files.isReadable(csvPath) ->
-                "読み取り可能なファイルが存在しません: $csvPath"
-            Files.size(csvPath) > MAX_CSV_BYTES ->
-                "ファイルサイズ上限（${MAX_CSV_BYTES / BYTES_PER_MB}MB）を超えています"
-            else -> null
-        }
+        val csvPath =
+            java.nio.file.Path
+                .of(trimmed)
+        val fileError =
+            when {
+                !csvPath.isAbsolute -> {
+                    "path は絶対パスで指定してください"
+                }
+
+                !csvPath.fileName.toString().endsWith(".csv") -> {
+                    "拡張子 .csv のファイルのみ取込可能です"
+                }
+
+                !Files.isRegularFile(csvPath) || !Files.isReadable(csvPath) -> {
+                    "読み取り可能なファイルが存在しません: $csvPath"
+                }
+
+                Files.size(csvPath) > MAX_CSV_BYTES -> {
+                    "ファイルサイズ上限（${MAX_CSV_BYTES / BYTES_PER_MB}MB）を超えています"
+                }
+
+                else -> {
+                    null
+                }
+            }
         if (fileError != null) {
             throw AdminBadRequestException(fileError)
         }
@@ -94,12 +109,13 @@ class AdminResource(
         return value
     }
 
-    private fun aggregateCounts(): AggregateCounts = AggregateCounts(
-        salesByHourDow = countRows("sales_by_hour_dow"),
-        itemPairStats = countRows("item_pair_stats"),
-        customerMonthlyCohort = countRows("customer_monthly_cohort"),
-        rfmSegments = countRows("rfm_segments"),
-    )
+    private fun aggregateCounts(): AggregateCounts =
+        AggregateCounts(
+            salesByHourDow = countRows("sales_by_hour_dow"),
+            itemPairStats = countRows("item_pair_stats"),
+            customerMonthlyCohort = countRows("customer_monthly_cohort"),
+            rfmSegments = countRows("rfm_segments"),
+        )
 
     private fun countRows(table: String): Long {
         require(table in ALLOWED_TABLES) { "unexpected table: $table" }
@@ -112,8 +128,12 @@ class AdminResource(
         private const val MAX_ERRORS_IN_RESPONSE = 20
         private const val BYTES_PER_MB = 1024L * 1024L
         private const val MAX_CSV_BYTES = 100L * BYTES_PER_MB
-        private val ALLOWED_TABLES = setOf(
-            "sales_by_hour_dow", "item_pair_stats", "customer_monthly_cohort", "rfm_segments",
-        )
+        private val ALLOWED_TABLES =
+            setOf(
+                "sales_by_hour_dow",
+                "item_pair_stats",
+                "customer_monthly_cohort",
+                "rfm_segments",
+            )
     }
 }

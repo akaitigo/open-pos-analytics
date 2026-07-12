@@ -8,7 +8,9 @@ import java.time.YearMonth
 import java.time.temporal.ChronoUnit
 
 /** API のエラー応答ボディ。 */
-data class ApiError(val error: String)
+data class ApiError(
+    val error: String,
+)
 
 /** コホートマトリクスの1セル（初回購入月からの経過月ごとのリピート実績）。 */
 data class CohortCell(
@@ -90,8 +92,10 @@ enum class RfmSegment(
  * GET /api/cohort の期間パラメータ。YYYY-MM 形式・from<=to・最大36ヶ月を検証する。
  * 不正な入力は 400（[badRequest]）。
  */
-data class CohortRange(val from: YearMonth, val to: YearMonth) {
-
+data class CohortRange(
+    val from: YearMonth,
+    val to: YearMonth,
+) {
     /** マトリクスの最大経過月インデックス（例: 36ヶ月幅なら 0..35）。 */
     val maxOffset: Int = ChronoUnit.MONTHS.between(from, to).toInt()
 
@@ -101,7 +105,10 @@ data class CohortRange(val from: YearMonth, val to: YearMonth) {
         private const val MONTHS_PER_YEAR = 12
         private val PATTERN = Regex("""^(\d{4})-(\d{2})$""")
 
-        fun parse(from: String?, to: String?): CohortRange {
+        fun parse(
+            from: String?,
+            to: String?,
+        ): CohortRange {
             val fromYm = parseMonth(from, "from")
             val toYm = parseMonth(to, "to")
             if (fromYm > toYm) {
@@ -114,9 +121,13 @@ data class CohortRange(val from: YearMonth, val to: YearMonth) {
             return CohortRange(fromYm, toYm)
         }
 
-        private fun parseMonth(raw: String?, field: String): YearMonth {
-            val match = raw?.let { PATTERN.matchEntire(it) }
-                ?: throw badRequest("$field は YYYY-MM 形式で指定してください（指定値: ${raw ?: "なし"}）")
+        private fun parseMonth(
+            raw: String?,
+            field: String,
+        ): YearMonth {
+            val match =
+                raw?.let { PATTERN.matchEntire(it) }
+                    ?: throw badRequest("$field は YYYY-MM 形式で指定してください（指定値: ${raw ?: "なし"}）")
             val year = match.groupValues[1].toInt()
             val month = match.groupValues[2].toInt()
             if (month < MIN_MONTH || month > MONTHS_PER_YEAR) {
@@ -135,7 +146,8 @@ private const val DORMANT_REMAINING_VISITS = 4
 internal fun badRequest(message: String): WebApplicationException =
     WebApplicationException(
         message,
-        Response.status(Response.Status.BAD_REQUEST)
+        Response
+            .status(Response.Status.BAD_REQUEST)
             .entity(ApiError(message))
             .type(MediaType.APPLICATION_JSON)
             .build(),
