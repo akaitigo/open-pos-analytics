@@ -8,14 +8,14 @@ import io.quarkus.narayana.jta.QuarkusTransaction
 import io.quarkus.test.junit.QuarkusTest
 import jakarta.inject.Inject
 import jakarta.persistence.EntityManager
-import java.math.BigDecimal
-import java.time.OffsetDateTime
-import java.time.ZoneOffset
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import java.math.BigDecimal
+import java.time.OffsetDateTime
+import java.time.ZoneOffset
 
 /**
  * CohortQueryService の読み取りロジック検証。
@@ -25,7 +25,6 @@ import org.junit.jupiter.api.Test
  */
 @QuarkusTest
 class CohortQueryServiceTest {
-
     @Inject
     lateinit var cohortQueryService: CohortQueryService
 
@@ -45,17 +44,18 @@ class CohortQueryServiceTest {
         "transaction_id,occurred_at,member_id,product_code,product_name,category,quantity,unit_price"
 
     // M-001: 1,2,3月 / M-002: 1,2月 / M-003: 1月 / M-004: 2,3月（初回2月）
-    private val cohortCsv = listOf(
-        header,
-        row("TX-J1", "2026-01-05T12:00:00+09:00", "M-001"),
-        row("TX-J2", "2026-01-06T12:00:00+09:00", "M-002"),
-        row("TX-J3", "2026-01-07T12:00:00+09:00", "M-003"),
-        row("TX-F1", "2026-02-05T12:00:00+09:00", "M-001"),
-        row("TX-F2", "2026-02-06T12:00:00+09:00", "M-002"),
-        row("TX-F3", "2026-02-10T12:00:00+09:00", "M-004"),
-        row("TX-M1", "2026-03-05T12:00:00+09:00", "M-001"),
-        row("TX-M2", "2026-03-10T12:00:00+09:00", "M-004"),
-    )
+    private val cohortCsv =
+        listOf(
+            header,
+            row("TX-J1", "2026-01-05T12:00:00+09:00", "M-001"),
+            row("TX-J2", "2026-01-06T12:00:00+09:00", "M-002"),
+            row("TX-J3", "2026-01-07T12:00:00+09:00", "M-003"),
+            row("TX-F1", "2026-02-05T12:00:00+09:00", "M-001"),
+            row("TX-F2", "2026-02-06T12:00:00+09:00", "M-002"),
+            row("TX-F3", "2026-02-10T12:00:00+09:00", "M-004"),
+            row("TX-M1", "2026-03-05T12:00:00+09:00", "M-001"),
+            row("TX-M2", "2026-03-10T12:00:00+09:00", "M-004"),
+        )
 
     @BeforeEach
     fun setUp() {
@@ -167,28 +167,41 @@ class CohortQueryServiceTest {
         cohortAggregationService.recomputeRfmSegments()
     }
 
-    private fun insertCustomer(hash: String, lastSeen: OffsetDateTime, visits: Int, spent: Int) {
-        entityManager.createNativeQuery(
-            """
-            INSERT INTO customers (customer_hash, first_seen_at, last_seen_at, visit_count, total_spent)
-            VALUES (:hash, :seen, :seen, :visits, :spent)
-            """.trimIndent(),
-        )
-            .setParameter("hash", hash)
+    private fun insertCustomer(
+        hash: String,
+        lastSeen: OffsetDateTime,
+        visits: Int,
+        spent: Int,
+    ) {
+        entityManager
+            .createNativeQuery(
+                """
+                INSERT INTO customers (customer_hash, first_seen_at, last_seen_at, visit_count, total_spent)
+                VALUES (:hash, :seen, :seen, :visits, :spent)
+                """.trimIndent(),
+            ).setParameter("hash", hash)
             .setParameter("seen", lastSeen)
             .setParameter("visits", visits)
             .setParameter("spent", BigDecimal(spent).setScale(2))
             .executeUpdate()
     }
 
-    private fun cell(row: CohortRow, offset: Int): CohortCell =
-        row.cells.first { it.monthOffset == offset }
+    private fun cell(
+        row: CohortRow,
+        offset: Int,
+    ): CohortCell = row.cells.first { it.monthOffset == offset }
 
-    private fun row(txId: String, occurredAt: String, memberId: String): String =
-        "$txId,$occurredAt,$memberId,P-101,鮭おにぎり,米飯,1,180"
+    private fun row(
+        txId: String,
+        occurredAt: String,
+        memberId: String,
+    ): String = "$txId,$occurredAt,$memberId,P-101,鮭おにぎり,米飯,1,180"
 
-    private fun ts(year: Int, month: Int, day: Int): OffsetDateTime =
-        OffsetDateTime.of(year, month, day, 12, 0, 0, 0, ZoneOffset.ofHours(9))
+    private fun ts(
+        year: Int,
+        month: Int,
+        day: Int,
+    ): OffsetDateTime = OffsetDateTime.of(year, month, day, 12, 0, 0, 0, ZoneOffset.ofHours(9))
 
     companion object {
         private const val EPS = 1e-9

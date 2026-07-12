@@ -11,8 +11,9 @@ import jakarta.transaction.Transactional
  * item_pair_stats の time_segment は MVP では 'all' のみ（朝/昼/晩の分割は #10）。
  */
 @ApplicationScoped
-class AggregationService(private val entityManager: EntityManager) {
-
+class AggregationService(
+    private val entityManager: EntityManager,
+) {
     @Transactional
     fun recomputeAll(minPairCount: Long = DEFAULT_MIN_PAIR_COUNT) {
         recomputeSalesByHourDow()
@@ -30,7 +31,8 @@ class AggregationService(private val entityManager: EntityManager) {
     @Transactional
     fun recomputeItemPairStats(minPairCount: Long = DEFAULT_MIN_PAIR_COUNT) {
         execute("DELETE FROM item_pair_stats")
-        entityManager.createNativeQuery(INSERT_ITEM_PAIR_SQL)
+        entityManager
+            .createNativeQuery(INSERT_ITEM_PAIR_SQL)
             .setParameter("minPairCount", minPairCount)
             .executeUpdate()
     }
@@ -50,7 +52,8 @@ class AggregationService(private val entityManager: EntityManager) {
         private const val DEFAULT_MIN_PAIR_COUNT = 2L
         private const val TZ = "Asia/Tokyo"
 
-        private val INSERT_SALES_BY_CATEGORY_SQL = """
+        private val INSERT_SALES_BY_CATEGORY_SQL =
+            """
             INSERT INTO sales_by_hour_dow (dow, hour, category, sales_amount, transaction_count, item_count)
             SELECT EXTRACT(DOW FROM t.occurred_at AT TIME ZONE '$TZ')::smallint,
                    EXTRACT(HOUR FROM t.occurred_at AT TIME ZONE '$TZ')::smallint,
@@ -61,9 +64,10 @@ class AggregationService(private val entityManager: EntityManager) {
             FROM line_items li
             JOIN transactions t ON t.id = li.transaction_id
             GROUP BY 1, 2, 3
-        """.trimIndent()
+            """.trimIndent()
 
-        private val INSERT_SALES_ALL_SQL = """
+        private val INSERT_SALES_ALL_SQL =
+            """
             INSERT INTO sales_by_hour_dow (dow, hour, category, sales_amount, transaction_count, item_count)
             SELECT EXTRACT(DOW FROM t.occurred_at AT TIME ZONE '$TZ')::smallint,
                    EXTRACT(HOUR FROM t.occurred_at AT TIME ZONE '$TZ')::smallint,
@@ -74,9 +78,10 @@ class AggregationService(private val entityManager: EntityManager) {
             FROM line_items li
             JOIN transactions t ON t.id = li.transaction_id
             GROUP BY 1, 2
-        """.trimIndent()
+            """.trimIndent()
 
-        private val INSERT_ITEM_PAIR_SQL = """
+        private val INSERT_ITEM_PAIR_SQL =
+            """
             WITH tx_products AS (
                 SELECT DISTINCT transaction_id, product_code FROM line_items
             ),
@@ -107,9 +112,10 @@ class AggregationService(private val entityManager: EntityManager) {
             JOIN product_tx_counts cb ON cb.product_code = p.product_b
             CROSS JOIN tx_total tt
             WHERE p.pair_count >= :minPairCount AND tt.n > 0
-        """.trimIndent()
+            """.trimIndent()
 
-        private val INSERT_COHORT_SQL = """
+        private val INSERT_COHORT_SQL =
+            """
             WITH firsts AS (
                 SELECT customer_hash,
                        date_trunc('month', MIN(occurred_at AT TIME ZONE '$TZ'))::date AS cohort_month
@@ -130,6 +136,6 @@ class AggregationService(private val entityManager: EntityManager) {
             FROM activity a
             JOIN firsts f USING (customer_hash)
             GROUP BY 1, 2
-        """.trimIndent()
+            """.trimIndent()
     }
 }

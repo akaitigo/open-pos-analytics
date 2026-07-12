@@ -9,9 +9,6 @@ import io.quarkus.test.junit.QuarkusTest
 import io.restassured.RestAssured.given
 import jakarta.inject.Inject
 import jakarta.persistence.EntityManager
-import java.math.BigDecimal
-import java.time.OffsetDateTime
-import java.time.ZoneOffset
 import org.hamcrest.CoreMatchers.equalTo
 import org.hamcrest.CoreMatchers.hasItems
 import org.hamcrest.CoreMatchers.not
@@ -20,6 +17,9 @@ import org.hamcrest.Matchers.notNullValue
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import java.math.BigDecimal
+import java.time.OffsetDateTime
+import java.time.ZoneOffset
 
 /**
  * cohort/RFM REST API のエンドツーエンド検証。
@@ -30,7 +30,6 @@ import org.junit.jupiter.api.Test
  */
 @QuarkusTest
 class CohortResourceTest {
-
     @Inject
     lateinit var ingestService: IngestService
 
@@ -50,38 +49,57 @@ class CohortResourceTest {
 
     @Test
     fun `cohort は from・to 未指定で400`() {
-        given().`when`().get("/api/cohort")
-            .then().statusCode(400).body("error", notNullValue())
+        given()
+            .`when`()
+            .get("/api/cohort")
+            .then()
+            .statusCode(400)
+            .body("error", notNullValue())
     }
 
     @Test
     fun `cohort は不正な月形式で400`() {
-        given().`when`().get("/api/cohort?from=2026-3&to=2026-05")
-            .then().statusCode(400)
+        given()
+            .`when`()
+            .get("/api/cohort?from=2026-3&to=2026-05")
+            .then()
+            .statusCode(400)
     }
 
     @Test
     fun `cohort は存在しない月（13月）で400`() {
-        given().`when`().get("/api/cohort?from=2026-13&to=2026-05")
-            .then().statusCode(400)
+        given()
+            .`when`()
+            .get("/api/cohort?from=2026-13&to=2026-05")
+            .then()
+            .statusCode(400)
     }
 
     @Test
     fun `cohort は from が to より後で400`() {
-        given().`when`().get("/api/cohort?from=2026-05&to=2026-01")
-            .then().statusCode(400)
+        given()
+            .`when`()
+            .get("/api/cohort?from=2026-05&to=2026-01")
+            .then()
+            .statusCode(400)
     }
 
     @Test
     fun `cohort は36ヶ月を超える範囲で400`() {
-        given().`when`().get("/api/cohort?from=2020-01&to=2026-01")
-            .then().statusCode(400)
+        given()
+            .`when`()
+            .get("/api/cohort?from=2020-01&to=2026-01")
+            .then()
+            .statusCode(400)
     }
 
     @Test
     fun `cohort は会員データ無しでも200でフォールバック`() {
-        given().`when`().get("/api/cohort?from=2026-01&to=2026-06")
-            .then().statusCode(200)
+        given()
+            .`when`()
+            .get("/api/cohort?from=2026-01&to=2026-06")
+            .then()
+            .statusCode(200)
             .body("hasMemberData", equalTo(false))
             .body("cohorts.size()", equalTo(0))
     }
@@ -90,8 +108,11 @@ class CohortResourceTest {
     fun `cohort はデータありで200と構造を返す`() {
         ingestAndAggregateCohort()
 
-        given().`when`().get("/api/cohort?from=2026-01&to=2026-03")
-            .then().statusCode(200)
+        given()
+            .`when`()
+            .get("/api/cohort?from=2026-01&to=2026-03")
+            .then()
+            .statusCode(200)
             .body("hasMemberData", equalTo(true))
             .body("maxMonthOffset", equalTo(2))
             .body("cohorts.cohortMonth", hasItems("2026-01", "2026-02"))
@@ -99,24 +120,34 @@ class CohortResourceTest {
 
     @Test
     fun `rfm は会員データ無しでも200でフォールバック`() {
-        given().`when`().get("/api/rfm")
-            .then().statusCode(200)
+        given()
+            .`when`()
+            .get("/api/rfm")
+            .then()
+            .statusCode(200)
             .body("hasMemberData", equalTo(false))
             .body("segments.size()", equalTo(0))
     }
 
     @Test
     fun `rfm は不正な segment で400`() {
-        given().`when`().get("/api/rfm?segment=platinum")
-            .then().statusCode(400).body("error", notNullValue())
+        given()
+            .`when`()
+            .get("/api/rfm?segment=platinum")
+            .then()
+            .statusCode(400)
+            .body("error", notNullValue())
     }
 
     @Test
     fun `rfm はデータありで3セグメントを返す`() {
         setupRfmCustomers()
 
-        given().`when`().get("/api/rfm")
-            .then().statusCode(200)
+        given()
+            .`when`()
+            .get("/api/rfm")
+            .then()
+            .statusCode(200)
             .body("hasMemberData", equalTo(true))
             .body("totalCustomers", equalTo(9))
             .body("segments.size()", equalTo(3))
@@ -127,8 +158,11 @@ class CohortResourceTest {
     fun `rfm は segment フィルタで単一セグメントを返す`() {
         setupRfmCustomers()
 
-        given().`when`().get("/api/rfm?segment=loyal")
-            .then().statusCode(200)
+        given()
+            .`when`()
+            .get("/api/rfm?segment=loyal")
+            .then()
+            .statusCode(200)
             .body("segments.size()", equalTo(1))
             .body("segments[0].segment", equalTo("loyal"))
             .body("segments[0].customerCount", equalTo(4))
@@ -138,10 +172,15 @@ class CohortResourceTest {
     fun `rfm 応答に会員ハッシュが含まれない`() {
         setupRfmCustomers()
 
-        val body = given().`when`().get("/api/rfm")
-            .then().statusCode(200)
-            .body(not(containsString("hashA")))
-            .extract().asString()
+        val body =
+            given()
+                .`when`()
+                .get("/api/rfm")
+                .then()
+                .statusCode(200)
+                .body(not(containsString("hashA")))
+                .extract()
+                .asString()
         assertFalse(body.contains("customer_hash"), "応答にハッシュカラム名を含めない")
         assertFalse(body.contains("hashB"), "応答に会員ハッシュ値を含めない")
     }
@@ -149,17 +188,18 @@ class CohortResourceTest {
     private fun ingestAndAggregateCohort() {
         val header =
             "transaction_id,occurred_at,member_id,product_code,product_name,category,quantity,unit_price"
-        val csv = listOf(
-            header,
-            "TX-J1,2026-01-05T12:00:00+09:00,M-001,P-101,鮭おにぎり,米飯,1,180",
-            "TX-J2,2026-01-06T12:00:00+09:00,M-002,P-101,鮭おにぎり,米飯,1,180",
-            "TX-J3,2026-01-07T12:00:00+09:00,M-003,P-101,鮭おにぎり,米飯,1,180",
-            "TX-F1,2026-02-05T12:00:00+09:00,M-001,P-101,鮭おにぎり,米飯,1,180",
-            "TX-F2,2026-02-06T12:00:00+09:00,M-002,P-101,鮭おにぎり,米飯,1,180",
-            "TX-F3,2026-02-10T12:00:00+09:00,M-004,P-101,鮭おにぎり,米飯,1,180",
-            "TX-M1,2026-03-05T12:00:00+09:00,M-001,P-101,鮭おにぎり,米飯,1,180",
-            "TX-M2,2026-03-10T12:00:00+09:00,M-004,P-101,鮭おにぎり,米飯,1,180",
-        )
+        val csv =
+            listOf(
+                header,
+                "TX-J1,2026-01-05T12:00:00+09:00,M-001,P-101,鮭おにぎり,米飯,1,180",
+                "TX-J2,2026-01-06T12:00:00+09:00,M-002,P-101,鮭おにぎり,米飯,1,180",
+                "TX-J3,2026-01-07T12:00:00+09:00,M-003,P-101,鮭おにぎり,米飯,1,180",
+                "TX-F1,2026-02-05T12:00:00+09:00,M-001,P-101,鮭おにぎり,米飯,1,180",
+                "TX-F2,2026-02-06T12:00:00+09:00,M-002,P-101,鮭おにぎり,米飯,1,180",
+                "TX-F3,2026-02-10T12:00:00+09:00,M-004,P-101,鮭おにぎり,米飯,1,180",
+                "TX-M1,2026-03-05T12:00:00+09:00,M-001,P-101,鮭おにぎり,米飯,1,180",
+                "TX-M2,2026-03-10T12:00:00+09:00,M-004,P-101,鮭おにぎり,米飯,1,180",
+            )
         ingestService.ingest(csv.asSequence())
         aggregationService.recomputeCustomerMonthlyCohort()
     }
@@ -179,20 +219,28 @@ class CohortResourceTest {
         cohortAggregationService.recomputeRfmSegments()
     }
 
-    private fun insertCustomer(hash: String, lastSeen: OffsetDateTime, visits: Int, spent: Int) {
-        entityManager.createNativeQuery(
-            """
-            INSERT INTO customers (customer_hash, first_seen_at, last_seen_at, visit_count, total_spent)
-            VALUES (:hash, :seen, :seen, :visits, :spent)
-            """.trimIndent(),
-        )
-            .setParameter("hash", hash)
+    private fun insertCustomer(
+        hash: String,
+        lastSeen: OffsetDateTime,
+        visits: Int,
+        spent: Int,
+    ) {
+        entityManager
+            .createNativeQuery(
+                """
+                INSERT INTO customers (customer_hash, first_seen_at, last_seen_at, visit_count, total_spent)
+                VALUES (:hash, :seen, :seen, :visits, :spent)
+                """.trimIndent(),
+            ).setParameter("hash", hash)
             .setParameter("seen", lastSeen)
             .setParameter("visits", visits)
             .setParameter("spent", BigDecimal(spent).setScale(2))
             .executeUpdate()
     }
 
-    private fun ts(year: Int, month: Int, day: Int): OffsetDateTime =
-        OffsetDateTime.of(year, month, day, 12, 0, 0, 0, ZoneOffset.ofHours(9))
+    private fun ts(
+        year: Int,
+        month: Int,
+        day: Int,
+    ): OffsetDateTime = OffsetDateTime.of(year, month, day, 12, 0, 0, 0, ZoneOffset.ofHours(9))
 }

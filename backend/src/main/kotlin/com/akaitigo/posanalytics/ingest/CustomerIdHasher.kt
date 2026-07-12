@@ -1,9 +1,9 @@
 package com.akaitigo.posanalytics.ingest
 
 import jakarta.enterprise.context.ApplicationScoped
+import org.eclipse.microprofile.config.inject.ConfigProperty
 import java.nio.charset.StandardCharsets
 import java.security.MessageDigest
-import org.eclipse.microprofile.config.inject.ConfigProperty
 
 /**
  * 会員IDの一方向ハッシュ化（ADR-0003）。
@@ -13,7 +13,6 @@ import org.eclipse.microprofile.config.inject.ConfigProperty
 class CustomerIdHasher(
     @param:ConfigProperty(name = "analytics.customer-salt") private val salt: String,
 ) {
-
     fun hash(memberId: String): String {
         require(memberId.isNotBlank()) { "memberId が空です" }
         val digest = MessageDigest.getInstance("SHA-256")

@@ -14,8 +14,9 @@ import jakarta.ws.rs.core.Response
  * [BasketBadRequestException] を投げ、[BasketExceptionMapper] が 400 に変換する。
  */
 @Path("/api/basket")
-class BasketResource(private val repository: BasketPairRepository) {
-
+class BasketResource(
+    private val repository: BasketPairRepository,
+) {
     @GET
     @Path("/pairs")
     @Produces(MediaType.APPLICATION_JSON)
@@ -24,25 +25,29 @@ class BasketResource(private val repository: BasketPairRepository) {
         @QueryParam("segment") @DefaultValue(DEFAULT_SEGMENT) segmentParam: String,
         @QueryParam("limit") @DefaultValue(DEFAULT_LIMIT) limitParam: String,
     ): Response {
-        val sort = BasketSortKey.fromParam(sortParam)
-            ?: throw BasketBadRequestException("sort", SORT_ERROR)
-        val segment = BasketSegment.fromParam(segmentParam)
-            ?: throw BasketBadRequestException("segment", SEGMENT_ERROR)
+        val sort =
+            BasketSortKey.fromParam(sortParam)
+                ?: throw BasketBadRequestException("sort", SORT_ERROR)
+        val segment =
+            BasketSegment.fromParam(segmentParam)
+                ?: throw BasketBadRequestException("segment", SEGMENT_ERROR)
         val limit = parseLimit(limitParam)
         val pairs = repository.topPairs(segment, sort, limit)
-        val body = BasketPairsResponse(
-            segment = segment.value,
-            sort = sort.value,
-            limit = limit,
-            count = pairs.size,
-            pairs = pairs,
-        )
+        val body =
+            BasketPairsResponse(
+                segment = segment.value,
+                sort = sort.value,
+                limit = limit,
+                count = pairs.size,
+                pairs = pairs,
+            )
         return Response.ok(body).build()
     }
 
     private fun parseLimit(raw: String): Int {
-        val limit = raw.toIntOrNull()
-            ?: throw BasketBadRequestException("limit", LIMIT_ERROR)
+        val limit =
+            raw.toIntOrNull()
+                ?: throw BasketBadRequestException("limit", LIMIT_ERROR)
         if (limit < MIN_LIMIT || limit > MAX_LIMIT) {
             throw BasketBadRequestException("limit", LIMIT_ERROR)
         }

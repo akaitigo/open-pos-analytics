@@ -7,11 +7,11 @@ import org.junit.jupiter.api.Test
 
 @QuarkusTest
 class HealthCheckTest {
-
     @Test
     fun `health endpoint returns UP`() {
         given()
-            .`when`().get("/q/health")
+            .`when`()
+            .get("/q/health")
             .then()
             .statusCode(200)
             .body("status", equalTo("UP"))

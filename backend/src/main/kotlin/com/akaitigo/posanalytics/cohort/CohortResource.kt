@@ -16,8 +16,9 @@ import jakarta.ws.rs.core.MediaType
  */
 @Path("/api")
 @Produces(MediaType.APPLICATION_JSON)
-class CohortResource(private val queryService: CohortQueryService) {
-
+class CohortResource(
+    private val queryService: CohortQueryService,
+) {
     @GET
     @Path("/cohort")
     fun cohort(
@@ -27,6 +28,7 @@ class CohortResource(private val queryService: CohortQueryService) {
 
     @GET
     @Path("/rfm")
-    fun rfm(@QueryParam("segment") segment: String?): RfmResponse =
-        queryService.rfmSummary(RfmSegment.parseFilter(segment))
+    fun rfm(
+        @QueryParam("segment") segment: String?,
+    ): RfmResponse = queryService.rfmSummary(RfmSegment.parseFilter(segment))
 }

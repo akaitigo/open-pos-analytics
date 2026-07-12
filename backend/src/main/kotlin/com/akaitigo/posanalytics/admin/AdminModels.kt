@@ -25,7 +25,11 @@ data class AggregateCounts(
 )
 
 /** 400 応答ボディ。 */
-data class AdminError(val error: String)
+data class AdminError(
+    val error: String,
+)
 
 /** バリデーション失敗を 400 に変換するための例外。 */
-class AdminBadRequestException(message: String) : RuntimeException(message)
+class AdminBadRequestException(
+    message: String,
+) : RuntimeException(message)

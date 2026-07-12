@@ -10,22 +10,27 @@ import java.math.BigDecimal
  * API は #8 が事前計算した値を返すのみ（再集計はしない）。SQL はパラメータバインド。
  */
 @ApplicationScoped
-class HeatmapService(private val entityManager: EntityManager) {
-
+class HeatmapService(
+    private val entityManager: EntityManager,
+) {
     /** 合算センチネル（__ALL__）を除いた実在カテゴリを昇順で返す。 */
     fun listCategories(): List<String> {
-        val rows = entityManager.createNativeQuery(CATEGORIES_SQL)
-            .setParameter("all", AggregationService.CATEGORY_ALL)
-            .resultList
+        val rows =
+            entityManager
+                .createNativeQuery(CATEGORIES_SQL)
+                .setParameter("all", AggregationService.CATEGORY_ALL)
+                .resultList
         return rows.map { it as String }
     }
 
     /** カテゴリが集計テーブルに存在するか（合算センチネルは対象外）。 */
     fun categoryExists(category: String): Boolean {
-        val count = entityManager.createNativeQuery(CATEGORY_EXISTS_SQL)
-            .setParameter("category", category)
-            .setParameter("all", AggregationService.CATEGORY_ALL)
-            .singleResult as Number
+        val count =
+            entityManager
+                .createNativeQuery(CATEGORY_EXISTS_SQL)
+                .setParameter("category", category)
+                .setParameter("all", AggregationService.CATEGORY_ALL)
+                .singleResult as Number
         return count.toLong() > 0
     }
 
@@ -33,11 +38,16 @@ class HeatmapService(private val entityManager: EntityManager) {
      * 指定カテゴリのヒートマップセルを返す。
      * @param category null/空文字は全カテゴリ合算（__ALL__）
      */
-    fun heatmap(category: String?, metric: Metric): HeatmapResponse {
+    fun heatmap(
+        category: String?,
+        metric: Metric,
+    ): HeatmapResponse {
         val resolved = category?.takeIf { it.isNotBlank() } ?: AggregationService.CATEGORY_ALL
-        val rows = entityManager.createNativeQuery(CELLS_SQL)
-            .setParameter("category", resolved)
-            .resultList
+        val rows =
+            entityManager
+                .createNativeQuery(CELLS_SQL)
+                .setParameter("category", resolved)
+                .resultList
         val cells = rows.map { toCell(it) }
         return HeatmapResponse(metric = metric.param, category = resolved, cells = cells)
     }

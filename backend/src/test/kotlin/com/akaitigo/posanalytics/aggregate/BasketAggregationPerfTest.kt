@@ -17,7 +17,6 @@ import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable
 @QuarkusTest
 @EnabledIfEnvironmentVariable(named = "RUN_PERF_TEST", matches = "true")
 class BasketAggregationPerfTest {
-
     @Inject
     lateinit var basketAggregationService: BasketAggregationService
 
@@ -37,7 +36,10 @@ class BasketAggregationPerfTest {
         assertTrue(elapsedMs < LIMIT_MS, "集計は60秒以内で完了すべき: ${elapsedMs}ms")
     }
 
-    private fun seed(skuCount: Int, txCount: Int) {
+    private fun seed(
+        skuCount: Int,
+        txCount: Int,
+    ) {
         QuarkusTransaction.requiringNew().run {
             listOf("line_items", "item_pair_stats", "transactions").forEach { table ->
                 entityManager.createNativeQuery("DELETE FROM $table").executeUpdate()
@@ -50,10 +52,11 @@ class BasketAggregationPerfTest {
     private fun countSegmentedPairs(): Long =
         QuarkusTransaction.requiringNew().call {
             (
-                entityManager.createNativeQuery(
-                    "SELECT COUNT(*) FROM item_pair_stats WHERE time_segment <> 'all'",
-                ).singleResult as Number
-                ).toLong()
+                entityManager
+                    .createNativeQuery(
+                        "SELECT COUNT(*) FROM item_pair_stats WHERE time_segment <> 'all'",
+                    ).singleResult as Number
+            ).toLong()
         }
 
     companion object {
@@ -65,16 +68,18 @@ class BasketAggregationPerfTest {
         private const val NANOS_PER_MILLI = 1_000_000L
 
         // 100k トランザクションを 300 日 × 24 時間に分散させ、時間帯セグメントを広く行き渡らせる。
-        private val INSERT_TX_SQL = """
+        private val INSERT_TX_SQL =
+            """
             INSERT INTO transactions (source_transaction_id, occurred_at, total_amount, item_count)
             SELECT 'PERF-' || g,
                    TIMESTAMPTZ '2026-01-01 00:00:00+09:00' + ((g * 137) % 7200) * INTERVAL '1 hour',
                    300, 3
             FROM generate_series(1, :txCount) g
-        """.trimIndent()
+            """.trimIndent()
 
         // 各トランザクションに 3 明細を割り当て、hashtext で 1,000 SKU に決定的に分散させる。
-        private val INSERT_ITEMS_SQL = """
+        private val INSERT_ITEMS_SQL =
+            """
             INSERT INTO line_items
                 (transaction_id, product_code, product_name, category, quantity, unit_price, line_amount)
             SELECT t.id,
@@ -82,6 +87,6 @@ class BasketAggregationPerfTest {
                    'perf', 'perf', 1, 100, 100
             FROM transactions t
             CROSS JOIN generate_series(1, 3) k
-        """.trimIndent()
+            """.trimIndent()
     }
 }

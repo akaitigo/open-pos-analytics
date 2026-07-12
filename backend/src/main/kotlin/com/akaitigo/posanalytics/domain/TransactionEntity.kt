@@ -14,7 +14,6 @@ import java.time.Instant
 @Entity
 @Table(name = "transactions")
 class TransactionEntity : PanacheEntityBase {
-
     companion object : PanacheCompanionBase<TransactionEntity, Long> {
         fun existsBySourceId(sourceTransactionId: String): Boolean =
             count("sourceTransactionId = ?1", sourceTransactionId) > 0

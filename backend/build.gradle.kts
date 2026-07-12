@@ -3,6 +3,7 @@ plugins {
     kotlin("plugin.allopen") version "2.4.0"
     id("io.quarkus") version "3.37.2"
     id("io.gitlab.arturbosch.detekt") version "1.23.8"
+    id("org.jmailen.kotlinter") version "5.6.0"
 }
 
 repositories {
