@@ -1,16 +1,14 @@
 {
-	"$schema": "https://biomejs.dev/schemas/2.0.0/schema.json",
+	"$schema": "https://biomejs.dev/schemas/2.5.3/schema.json",
 	"vcs": {
 		"enabled": true,
 		"clientKind": "git",
 		"useIgnoreFile": true
 	},
 	"files": {
-		"ignore": ["dist/**", "coverage/**", "node_modules/**"]
+		"includes": ["**", "!**/dist", "!**/coverage", "!**/node_modules"]
 	},
-	"organizeImports": {
-		"enabled": true
-	},
+	"assist": { "actions": { "source": { "organizeImports": "on" } } },
 	"formatter": {
 		"enabled": true,
 		"indentStyle": "tab",
@@ -29,7 +27,7 @@
 	"linter": {
 		"enabled": true,
 		"rules": {
-			"recommended": true,
+			"preset": "recommended",
 			"complexity": {
 				"noBannedTypes": "error",
 				"noExcessiveCognitiveComplexity": {
@@ -65,9 +63,9 @@
 				"useTemplate": "error"
 			},
 			"suspicious": {
-				"noConsoleLog": "warn",
 				"noExplicitAny": "error",
-				"noSkippedTests": "warn"
+				"noSkippedTests": "warn",
+				"noConsole": { "level": "warn", "options": { "allow": ["log"] } }
 			},
 			"nursery": {
 				"useSortedClasses": "warn"
@@ -76,7 +74,7 @@
 	},
 	"overrides": [
 		{
-			"include": ["**/*.test.ts", "**/*.test.tsx", "**/*.spec.ts", "**/*.spec.tsx"],
+			"includes": ["**/*.test.ts", "**/*.test.tsx", "**/*.spec.ts", "**/*.spec.tsx"],
 			"linter": {
 				"rules": {
 					"suspicious": {
